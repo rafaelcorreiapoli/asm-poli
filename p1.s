@@ -1,34 +1,41 @@
-  .text
-  .global main
-
-size:  .word 7
-lista: .word 13, 15, 8, 3, 1033, 100134, 111111
-
-numero: .word 10
-modulo: .space 100
+.text
+.global main
+lista: .space 100
+numero: .word 20
+size: .word 1
 
 main:
-            LDR r5, =lista
-            LDR r6, size
-            LDR r7, =modulo
-            LDR r2, numero
-            ADD r6, r6, #1
-mod:
-            LDR r1, [r5]
-            ADD r5, r5, #4
-            SUB r6, r6, #1 @ size = size - 1
-            CMP r6, #0
-            BLNE divide
-            STR r1, [r7], #4
-            CMP r6, #0
-            BEQ done
-            B mod
+            LDR   r1, =0x1E @ 30 em hexa
+            LDR   r8, =lista @ ponteiro para a fila de primos
+            LDR   r9, size
+            LDR r7, numero
+            BL fatora
+            B done
+
+fatora:
+  MOV r4, #2
+
+
+loop:
+  CMP r4, r7
+  BGT done
+  MOV r1, r7 @  20
+  MOV r2, r4  @  i
+  BL divide
+  CMP r1, #0
+  MOVEQ r7, r0
+  STREQ r4, [r8], #4
+  ADDEQ r9, r9, #1
+  ADDNE r4, r4, #1
+
+  B loop
+
 @ Subrotina divide
 @ Divide r1 por r2, resto no r1, e quociente no r0
 divide:
-            STMFD   sp!, {r3, lr}
+            STMFD   sp!, {r3, lr} @ Empilha estado anterior
             CMP     r2, #0
-            BEQ     done
+            MOVEQ     pc, lr @ retorna da subrotina
 
             MOV     r0, #0
             MOV     r3, #1
@@ -46,8 +53,10 @@ divide_next:
             MOVS    r3, r3, LSR #1
             MOVCC   r2, r2, LSR #1
             BCC     divide_next
-            LDMFD   sp!, {r3, lr}
+            LDMFD   sp!, {r3, lr} @ Restaura estado anterior
             MOV     pc, lr @ retorna da subrotina
 
 done:
-  SWI  0x123456
+          SUB r9, r9, #1
+          @ EM r9 tem o size, mas precisa guardar ele no endereço size?
+            SWI         0x123456 @ End

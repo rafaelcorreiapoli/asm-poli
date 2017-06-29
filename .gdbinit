@@ -1,5 +1,3 @@
 target sim
 load
-b done
-
-
+b fatora
